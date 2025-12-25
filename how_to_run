@@ -1,0 +1,31 @@
+1. Train the Protocol model
+
+# Navigate to your project directory
+cd C:\StartUp\polo-foundation-model
+
+# Run training with your pair dataset
+python scripts/step7_train_protocol.py `
+    --pairs artifacts/step7/pairs.parquet `
+    --dataset data/processed_v2/hf `
+    --output artifacts/step7/runs/run_001 `
+    --epochs 10 `
+    --batch_size 64 `
+    --lr 1e-4 `
+    --seed 42
+
+2. Evaluate the Protocol model
+
+# Run full evaluation with the final checkpoint
+python scripts/step7_eval_full.py `
+    --checkpoint artifacts/step7/runs/run_001/checkpoints/final.pt `
+    --dataset data/processed_v2/hf `
+    --baseline_metrics artifacts/retrieval/openclip_vitb32_v0/eval/metrics.json `
+    --output artifacts/step7/runs/run_001/eval_full
+
+
+3.  Check the Scoreboard Results
+
+# View the scoreboard
+type artifacts/step7/runs/run_001/eval_full/scoreboard.txt
+
+

@@ -1,0 +1,31 @@
+# Unified label schema for fashion dataset
+category:
+  - top
+  - outerwear
+  - bottom
+  - dress
+  - other
+
+sleeve_length:
+  - sleeveless
+  - short
+  - three_quarter
+  - long
+  - unknown
+
+neckline:
+  - polo_collar
+  - crew
+  - v_neck
+  - shirt_collar
+  - hood
+  - other
+  - unknown
+
+pattern:
+  - solid
+  - striped
+  - checked
+  - printed
+  - other
+  - unknown

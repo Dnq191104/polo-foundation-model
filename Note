@@ -1,0 +1,8 @@
+To run extration attribute: 
+
+cd C:\StartUp\polo-foundation-model; python data/process_data.py --input data/data-00000-of-00001.parquet --output_dir data/processed_with_attrs --save_format hf --extract_attributes 2>&1
+
+
+To check the extraction attribute result:
+
+cd C:\StartUp\polo-foundation-model; python scripts/spotcheck_attributes.py --dataset data/processed_with_attrs/hf --report --n 10 --preview 3 --output test_spotcheck.csv 2>&1

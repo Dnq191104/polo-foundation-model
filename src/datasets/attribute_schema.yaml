@@ -1,0 +1,736 @@
+# Fashion Attribute Extraction Schema v0
+# This file defines canonical tags and their phrase triggers for attribute extraction
+
+# Configuration for extraction behavior
+config:
+  # Attributes where only one tag should be selected (mutually exclusive)
+  mutually_exclusive:
+    - sleeve
+    - neckline
+  # Attributes where multiple tags are allowed
+  multi_value:
+    - material
+    - pattern
+  # Default value when no tag is found
+  unknown_value: "unknown"
+
+# Attribute compatibility - which attributes apply to which garment scopes
+# This prevents extracting neckline/sleeve for shorts, etc.
+attribute_compatibility:
+  upper:
+    - material
+    - pattern
+    - neckline
+    - sleeve
+  lower:
+    - material
+    - pattern
+    # NO neckline or sleeve for lower body garments
+  full:
+    - material
+    - pattern
+    - neckline
+    - sleeve
+
+# Garment keywords used to identify which sentence refers to which garment type
+garment_keywords:
+  upper:
+    - shirt
+    - blouse
+    - top
+    - tee
+    - t-shirt
+    - tank
+    - sweater
+    - cardigan
+    - jacket
+    - coat
+    - hoodie
+    - sweatshirt
+    - vest
+    - blazer
+    - pullover
+    - upper clothing
+  lower:
+    - pants
+    - pant
+    - shorts
+    - jeans
+    - jean
+    - skirt
+    - leggings
+    - trousers
+    - trouser
+    - capris
+    - culottes
+    - lower clothing
+    - the shorts
+    - the pants
+    - the jeans
+    - the skirt
+  full:
+    - dress
+    - jumpsuit
+    - romper
+    - overall
+    - gown
+    - maxi
+
+# Noise filtering patterns - sentences containing these will be ignored
+# NOTE: Be CAREFUL not to filter sentences that contain garment information!
+# Only filter sentences that are PURELY about accessories or body features.
+noise_patterns:
+  # Accessory-only sentences (these typically don't mention garments)
+  accessories:
+    - "wearing a ring"
+    - "ring on her finger"
+    - "ring on his finger"
+    - "accessory on her wrist"
+    - "accessory on his wrist"
+    - "accessory in his her neck"
+    - "there is an accessory"
+    - "bracelet"
+    - "necklace"
+    - "earring"
+    - "jewelry"
+    - "wears a ring"
+    - "has neckwear"
+    - "wears sunglasses"
+    - "wears a hat"
+    - "has a hat"
+    - "wearing a belt"
+    - "wearing leggings"
+    - "wearing a pair of socks"
+    - "is wearing leggings"
+
+# Garment type mappings for scope-based extraction
+garment_scopes:
+  upper:
+    - blouses
+    - shirts
+    - t-shirts
+    - tops
+    - jackets
+    - coats
+    - sweaters
+    - cardigans
+    - blazers
+    - vests
+    - hoodies
+  lower:
+    - pants
+    - jeans
+    - shorts
+    - skirts
+    - leggings
+    - trousers
+    - capris
+    - culottes
+  full:
+    - dresses
+    - jumpsuits
+    - rompers
+    - overalls
+    - gowns
+    - maxi
+
+# =============================================================================
+# MATERIAL ATTRIBUTES (Most Important)
+# =============================================================================
+material:
+  cotton:
+    triggers:
+      - "cotton"
+      - "100% cotton"
+      - "cotton fabric"
+      - "cotton blend"
+      - "pure cotton"
+    exclusions: []
+    priority: 1
+    
+  denim:
+    triggers:
+      - "denim"
+      - "jean"
+      - "jeans"
+      - "denim fabric"
+    exclusions: []
+    priority: 2
+    
+  knit:
+    triggers:
+      - "knit"
+      - "knitted"
+      - "ribbed knit"
+      - "cable knit"
+      - "knit fabric"
+      - "knitwear"
+      - "knitting fabric"
+      - "knitting"
+      - "furry fabric"
+      - "furry"
+      - "furry fabric"
+      - "furry knit"
+    exclusions: []
+    priority: 3
+    
+  wool:
+    triggers:
+      - "wool"
+      - "woolen"
+      - "merino"
+      - "cashmere"
+      - "wool blend"
+    exclusions: []
+    priority: 4
+    
+  leather:
+    triggers:
+      - "leather"
+      - "faux leather"
+      - "genuine leather"
+      - "pleather"
+      - "vegan leather"
+    exclusions: []
+    priority: 5
+    
+  polyester:
+    triggers:
+      - "polyester"
+      - "poly"
+      - "polyester blend"
+    exclusions: []
+    priority: 6
+    
+  linen:
+    triggers:
+      - "linen"
+      - "linen blend"
+      - "linen fabric"
+    exclusions: []
+    priority: 7
+    
+  silk:
+    triggers:
+      - "silk"
+      - "silky"
+      - "silk blend"
+      - "satin silk"
+    exclusions: []
+    priority: 8
+    
+  chiffon:
+    triggers:
+      - "chiffon"
+      - "chiffon fabric"
+    exclusions: []
+    priority: 9
+    
+  velvet:
+    triggers:
+      - "velvet"
+      - "velour"
+      - "velveteen"
+    exclusions: []
+    priority: 10
+    
+  satin:
+    triggers:
+      - "satin"
+      - "satin finish"
+    exclusions:
+      - "silk"  # Prefer silk if both appear
+    priority: 11
+    
+  lace:
+    triggers:
+      - "lace"
+      - "lacy"
+      - "lace trim"
+      - "lace overlay"
+    exclusions: []
+    priority: 12
+    
+  mesh:
+    triggers:
+      - "mesh"
+      - "mesh fabric"
+      - "sheer mesh"
+    exclusions: []
+    priority: 13
+    
+  jersey:
+    triggers:
+      - "jersey"
+      - "jersey knit"
+      - "jersey fabric"
+    exclusions: []
+    priority: 14
+    
+  fleece:
+    triggers:
+      - "fleece"
+      - "fleece fabric"
+      - "polar fleece"
+    exclusions: []
+    priority: 15
+
+# =============================================================================
+# PATTERN ATTRIBUTES
+# =============================================================================
+pattern:
+  solid:
+    triggers:
+      - "solid"
+      - "solid color"
+      - "solid colour"
+      - "solid color pattern"
+      - "solid color patterns"
+      - "solid colour pattern"
+      - "solid colour patterns"
+      - "pure color"
+      - "pure colour"
+      - "pure color pattern"
+      - "pure color patterns"
+      - "pure colour pattern"
+      - "pure colour patterns"
+      - "plain"
+      - "single color"
+      - "single colour"
+      - "monochrome"
+      - "one color"
+      - "one colour"
+    exclusions:
+      # If any other pattern is found, remove solid
+      - "stripe"
+      - "striped"
+      - "plaid"
+      - "check"
+      - "floral"
+      - "graphic"
+      - "polka"
+    priority: 99  # Lowest priority - removed if other patterns found
+    
+  stripe:
+    triggers:
+      - "stripe"
+      - "striped"
+      - "stripes"
+      - "stripe pattern"
+      - "stripe patterns"
+      - "striped pattern"
+      - "striped patterns"
+      - "pinstripe"
+      - "pin-stripe"
+      - "horizontal stripe"
+      - "vertical stripe"
+    exclusions: []
+    priority: 1
+    
+  plaid:
+    triggers:
+      - "plaid"
+      - "check"
+      - "checked"
+      - "checkered"
+      - "tartan"
+      - "gingham"
+      - "buffalo check"
+      - "windowpane"
+    exclusions: []
+    priority: 2
+    
+  floral:
+    triggers:
+      - "floral"
+      - "flower"
+      - "flowers"
+      - "floral print"
+      - "floral pattern"
+      - "botanical"
+    exclusions: []
+    priority: 3
+    
+  graphic:
+    triggers:
+      - "graphic"
+      - "graphic print"
+      - "graphic pattern"
+      - "graphic patterns"
+      - "logo"
+      - "logo print"
+      - "printed graphic"
+      - "screen print"
+      - "text print"
+      - "slogan"
+      - "printed"
+    exclusions: []
+    priority: 4
+    
+  polka_dot:
+    triggers:
+      - "polka dot"
+      - "polka dots"
+      - "polka-dot"
+      - "dotted"
+      - "dot pattern"
+    exclusions: []
+    priority: 5
+    
+  color_block:
+    triggers:
+      - "color block"
+      - "colour block"
+      - "color-block"
+      - "colour-block"
+      - "colorblock"
+      - "colourblock"
+      - "colorblocked"
+      - "colourblocked"
+      - "color blocking"
+      - "colour blocking"
+    exclusions: []
+    priority: 6
+    
+  animal_print:
+    triggers:
+      - "animal print"
+      - "leopard"
+      - "leopard print"
+      - "zebra"
+      - "zebra print"
+      - "snake"
+      - "snakeskin"
+      - "tiger"
+      - "cheetah"
+    exclusions: []
+    priority: 7
+    
+  abstract:
+    triggers:
+      - "abstract"
+      - "abstract print"
+      - "geometric"
+      - "geometric print"
+      - "geo print"
+      - "complicated patterns"
+      - "complicated pattern"
+      - "mixed patterns"
+      - "mixed pattern"
+      - "lattice"
+      - "lattice pattern"
+      - "lattice patterns"
+    exclusions: []
+    priority: 8
+    
+  paisley:
+    triggers:
+      - "paisley"
+      - "paisley print"
+    exclusions: []
+    priority: 9
+    
+  houndstooth:
+    triggers:
+      - "houndstooth"
+      - "hounds tooth"
+      - "hound's tooth"
+    exclusions: []
+    priority: 10
+    
+  tie_dye:
+    triggers:
+      - "tie-dye"
+      - "tie dye"
+      - "tiedye"
+    exclusions: []
+    priority: 11
+    
+  ombre:
+    triggers:
+      - "ombre"
+      - "ombré"
+      - "gradient"
+      - "dip dye"
+      - "dip-dye"
+    exclusions: []
+    priority: 12
+    
+  camouflage:
+    triggers:
+      - "camo"
+      - "camouflage"
+      - "camo print"
+    exclusions: []
+    priority: 13
+
+# =============================================================================
+# NECKLINE ATTRIBUTES (Mutually Exclusive)
+# =============================================================================
+neckline:
+  crew:
+    triggers:
+      - "crew"
+      - "crew neck"
+      - "crew-neck"
+      - "crewneck"
+      - "crew neckline"
+      - "crew collar"
+      - "crew-neck collar"
+    exclusions:
+      - "collarbone"
+    priority: 1
+    
+  v_neck:
+    triggers:
+      - "v-neck"
+      - "v neck"
+      - "vneck"
+      - "v-neckline"
+      - "v neckline"
+      - "v-shape"
+      - "v shape"
+      - "v-shape neckline"
+      - "v neck collar"
+    exclusions: []
+    priority: 2
+    
+  scoop:
+    triggers:
+      - "scoop"
+      - "scoop neck"
+      - "scoop-neck"
+      - "scoopneck"
+      - "u-neck"
+      - "u neck"
+    exclusions: []
+    priority: 3
+    
+  round:
+    triggers:
+      - "round"
+      - "round neck"
+      - "round-neck"
+      - "roundneck"
+      - "round neckline"
+      - "round collar"
+      - "round-neck collar"
+    exclusions: []
+    priority: 4
+    
+  turtleneck:
+    triggers:
+      - "turtleneck"
+      - "turtle neck"
+      - "turtle-neck"
+      - "mock neck"
+      - "mock-neck"
+      - "mockneck"
+      - "high neck"
+      - "high-neck"
+      - "funnel neck"
+    exclusions: []
+    priority: 5
+    
+  collared:
+    triggers:
+      - "collar"
+      - "collared"
+      - "polo collar"
+      - "shirt collar"
+      - "button-down collar"
+      - "point collar"
+      - "spread collar"
+      - "mandarin collar"
+      - "stand collar"
+      - "peter pan collar"
+      - "lapel"
+      - "lapel collar"
+      - "notched collar"
+      - "notch collar"
+    exclusions:
+      - "collarbone"
+      - "collarless"
+    priority: 6
+    
+  boat:
+    triggers:
+      - "boat neck"
+      - "boat-neck"
+      - "boatneck"
+      - "bateau"
+      - "bateau neck"
+    exclusions: []
+    priority: 7
+    
+  square:
+    triggers:
+      - "square neck"
+      - "square-neck"
+      - "squareneck"
+      - "square neckline"
+    exclusions: []
+    priority: 8
+    
+  halter:
+    triggers:
+      - "halter"
+      - "halter neck"
+      - "halter-neck"
+      - "halterneck"
+    exclusions: []
+    priority: 9
+    
+  off_shoulder:
+    triggers:
+      - "off-the-shoulder"
+      - "off the shoulder"
+      - "off-shoulder"
+      - "off shoulder"
+      - "one shoulder"
+      - "one-shoulder"
+      - "cold shoulder"
+      - "cold-shoulder"
+    exclusions: []
+    priority: 10
+    
+  sweetheart:
+    triggers:
+      - "sweetheart"
+      - "sweetheart neck"
+      - "sweetheart neckline"
+    exclusions: []
+    priority: 11
+    
+  cowl:
+    triggers:
+      - "cowl"
+      - "cowl neck"
+      - "cowl-neck"
+      - "cowlneck"
+    exclusions: []
+    priority: 12
+    
+  keyhole:
+    triggers:
+      - "keyhole"
+      - "keyhole neck"
+      - "keyhole neckline"
+    exclusions: []
+    priority: 13
+    
+  strapless:
+    triggers:
+      - "strapless"
+      - "tube"
+      - "bandeau"
+      - "suspenders"
+      - "suspenders neckline"
+    exclusions: []
+    priority: 14
+
+# =============================================================================
+# SLEEVE ATTRIBUTES (Mutually Exclusive)
+# =============================================================================
+sleeve:
+  sleeveless:
+    triggers:
+      - "sleeveless"
+      - "no sleeve"
+      - "without sleeve"
+      - "tank"
+    exclusions: []
+    priority: 1
+    
+  short_sleeve:
+    triggers:
+      - "short sleeve"
+      - "short-sleeve"
+      - "short sleeves"
+      - "shortsleeve"
+    exclusions: []
+    priority: 2
+    
+  long_sleeve:
+    triggers:
+      - "long sleeve"
+      - "long-sleeve"
+      - "long sleeves"
+      - "longsleeve"
+      - "full sleeve"
+    exclusions: []
+    priority: 3
+    
+  three_quarter:
+    triggers:
+      - "3/4 sleeve"
+      - "three-quarter"
+      - "three quarter"
+      - "3/4"
+      - "elbow sleeve"
+      - "elbow-length"
+      - "midi sleeve"
+      - "medium sleeve"
+      - "medium-sleeve"
+      - "medium sleeves"
+    exclusions: []
+    priority: 4
+    
+  cap:
+    triggers:
+      - "cap sleeve"
+      - "cap-sleeve"
+      - "capsleeve"
+    exclusions: []
+    priority: 5
+    
+  flutter:
+    triggers:
+      - "flutter sleeve"
+      - "flutter-sleeve"
+      - "fluttersleeve"
+    exclusions: []
+    priority: 6
+    
+  bell:
+    triggers:
+      - "bell sleeve"
+      - "bell-sleeve"
+      - "bellsleeve"
+      - "flared sleeve"
+    exclusions: []
+    priority: 7
+    
+  puff:
+    triggers:
+      - "puff sleeve"
+      - "puff-sleeve"
+      - "puffsleeve"
+      - "puffy sleeve"
+      - "balloon sleeve"
+    exclusions: []
+    priority: 8
+    
+  raglan:
+    triggers:
+      - "raglan"
+      - "raglan sleeve"
+    exclusions: []
+    priority: 9
+    
+  dolman:
+    triggers:
+      - "dolman"
+      - "dolman sleeve"
+      - "batwing"
+      - "batwing sleeve"
+    exclusions: []
+    priority: 10
+    
+  bishop:
+    triggers:
+      - "bishop"
+      - "bishop sleeve"
+    exclusions: []
+    priority: 11
+

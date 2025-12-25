@@ -1,0 +1,52 @@
+# Large data files
+*.npy
+*.npz
+*.pt
+*.pth
+*.bin
+*.pkl
+*.pickle
+*.parquet
+*.arrow
+*.zip
+
+# Cache directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+.cache/
+
+# Data directories
+data/
+artifacts/
+notebooks/.ipynb_checkpoints/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp*/
+temp*/
+*.tmp
+
+# Model artifacts (recreate with scripts)
+artifacts/
+data/processed/
+data/processed_v2/
+
+# Keep only small sample data
+!data/data-00000-of-00001.parquet
+!data/processed/hf_with_attributes_sample/

@@ -1,0 +1,202 @@
+{
+  "config": {
+    "catalog_dir": "artifacts\\step7\\runs\\run_004_linear\\eval_full_fixed\\catalog",
+    "query_dataset": "data/processed_v2/hf",
+    "query_split": "validation",
+    "n_queries": 4254,
+    "top_k": 10,
+    "candidate_n": 200,
+    "weight_image": 0.7,
+    "exclude_self": true
+  },
+  "metrics": {
+    "overall": {
+      "material_match@10": 0.5188998589562764,
+      "pattern_match@10": 0.38514339445228024,
+      "category_match@10": 0.1190644099670898,
+      "neckline_match@10": 0.10587682181476259,
+      "sleeve_match@10": 0.3002350728725905,
+      "material_match@10_known_only": 0.5233285917496444,
+      "n_queries_with_known_material": 4218
+    },
+    "by_category": {
+      "cardigans": {
+        "material_match@10": 0.5008064516129033,
+        "pattern_match@10": 0.36129032258064514,
+        "category_match@10": 0.08870967741935484,
+        "neckline_match@10": 0.11290322580645161,
+        "sleeve_match@10": 0.6467741935483872,
+        "n_queries": 124
+      },
+      "tees": {
+        "material_match@10": 0.6071324599708879,
+        "pattern_match@10": 0.4104075691411936,
+        "category_match@10": 0.16324599708879187,
+        "neckline_match@10": 0.12947598253275108,
+        "sleeve_match@10": 0.20756914119359535,
+        "n_queries": 1374
+      },
+      "blouses": {
+        "material_match@10": 0.3773981603153745,
+        "pattern_match@10": 0.37529566360052563,
+        "category_match@10": 0.11235216819973719,
+        "neckline_match@10": 0.09172141918528252,
+        "sleeve_match@10": 0.2890932982917214,
+        "n_queries": 761
+      },
+      "shorts": {
+        "material_match@10": 0.34683544303797464,
+        "pattern_match@10": 0.4803797468354431,
+        "category_match@10": 0.0018987341772151902,
+        "neckline_match@10": 0.0,
+        "sleeve_match@10": 0.0,
+        "n_queries": 158
+      },
+      "dresses": {
+        "material_match@10": 0.5248895434462444,
+        "pattern_match@10": 0.33578792341678937,
+        "category_match@10": 0.061855670103092786,
+        "neckline_match@10": 0.11811487481590575,
+        "sleeve_match@10": 0.19941089837997056,
+        "n_queries": 679
+      },
+      "shirts": {
+        "material_match@10": 0.6092307692307692,
+        "pattern_match@10": 0.28923076923076924,
+        "category_match@10": 0.0,
+        "neckline_match@10": 0.003076923076923077,
+        "sleeve_match@10": 0.4107692307692308,
+        "n_queries": 65
+      },
+      "sweaters": {
+        "material_match@10": 0.43450292397660817,
+        "pattern_match@10": 0.3564327485380117,
+        "category_match@10": 0.2850877192982456,
+        "neckline_match@10": 0.12807017543859647,
+        "sleeve_match@10": 0.6777777777777778,
+        "n_queries": 342
+      },
+      "skirts": {
+        "material_match@10": 0.5291666666666667,
+        "pattern_match@10": 0.44722222222222224,
+        "category_match@10": 0.037500000000000006,
+        "neckline_match@10": 0.0,
+        "sleeve_match@10": 0.0,
+        "n_queries": 72
+      },
+      "rompers": {
+        "material_match@10": 0.548,
+        "pattern_match@10": 0.376,
+        "category_match@10": 0.037333333333333336,
+        "neckline_match@10": 0.044000000000000004,
+        "sleeve_match@10": 0.148,
+        "n_queries": 150
+      },
+      "jackets": {
+        "material_match@10": 0.5897674418604651,
+        "pattern_match@10": 0.4232558139534884,
+        "category_match@10": 0.14046511627906977,
+        "neckline_match@10": 0.11906976744186047,
+        "sleeve_match@10": 0.7623255813953489,
+        "n_queries": 215
+      },
+      "pants": {
+        "material_match@10": 0.5552631578947369,
+        "pattern_match@10": 0.4828947368421053,
+        "category_match@10": 0.0,
+        "neckline_match@10": 0.0,
+        "sleeve_match@10": 0.0,
+        "n_queries": 76
+      },
+      "sweatshirts": {
+        "material_match@10": 0.616793893129771,
+        "pattern_match@10": 0.37709923664122136,
+        "category_match@10": 0.054198473282442754,
+        "neckline_match@10": 0.14427480916030533,
+        "sleeve_match@10": 0.7458015267175573,
+        "n_queries": 131
+      },
+      "denim": {
+        "material_match@10": 0.44166666666666665,
+        "pattern_match@10": 0.4916666666666667,
+        "category_match@10": 0.0,
+        "neckline_match@10": 0.17500000000000002,
+        "sleeve_match@10": 0.45,
+        "n_queries": 12
+      },
+      "graphic": {
+        "material_match@10": 0.605,
+        "pattern_match@10": 0.26375000000000004,
+        "category_match@10": 0.0037500000000000007,
+        "neckline_match@10": 0.14125000000000001,
+        "sleeve_match@10": 0.07625000000000001,
+        "n_queries": 80
+      },
+      "leggings": {
+        "material_match@10": 0.0,
+        "pattern_match@10": 0.4583333333333333,
+        "category_match@10": 0.0,
+        "neckline_match@10": 0.0,
+        "sleeve_match@10": 0.0,
+        "n_queries": 12
+      },
+      "suiting": {
+        "material_match@10": 0.2333333333333333,
+        "pattern_match@10": 0.43333333333333335,
+        "category_match@10": 0.0,
+        "neckline_match@10": 0.0,
+        "sleeve_match@10": 0.8666666666666667,
+        "n_queries": 3
+      }
+    },
+    "by_material": {
+      "chiffon": {
+        "material_match@10": 0.06685714285714286,
+        "pattern_match@10": 0.39066666666666666,
+        "category_match@10": 0.10876190476190477,
+        "neckline_match@10": 0.10171428571428572,
+        "sleeve_match@10": 0.29619047619047617,
+        "n_queries": 525
+      },
+      "cotton": {
+        "material_match@10": 0.6396277394175923,
+        "pattern_match@10": 0.3805764034824377,
+        "category_match@10": 0.11741218853197238,
+        "neckline_match@10": 0.10879615731011709,
+        "sleeve_match@10": 0.2815370759531672,
+        "n_queries": 3331
+      },
+      "knit": {
+        "material_match@10": 0.18981481481481483,
+        "pattern_match@10": 0.37546296296296294,
+        "category_match@10": 0.21944444444444444,
+        "neckline_match@10": 0.13564814814814816,
+        "sleeve_match@10": 0.6625,
+        "n_queries": 216
+      },
+      "denim": {
+        "material_match@10": 0.005785123966942149,
+        "pattern_match@10": 0.4793388429752066,
+        "category_match@10": 0.0512396694214876,
+        "neckline_match@10": 0.02066115702479339,
+        "sleeve_match@10": 0.20826446280991734,
+        "n_queries": 121
+      },
+      "leather": {
+        "material_match@10": 0.0,
+        "pattern_match@10": 0.47200000000000003,
+        "category_match@10": 0.15200000000000002,
+        "neckline_match@10": 0.08,
+        "sleeve_match@10": 0.58,
+        "n_queries": 25
+      }
+    }
+  },
+  "query_times": {
+    "mean_ms": 8.12494177520135,
+    "std_ms": 2.3420052558378495,
+    "p50_ms": 8.88073444366455,
+    "p95_ms": 11.231040954589844,
+    "p99_ms": 12.559404373168956
+  }
+}
