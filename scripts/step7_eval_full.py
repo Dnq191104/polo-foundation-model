@@ -30,7 +30,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.training.protocol_model import ProtocolModel
-from src.utils.scoreboard import Step7Scoreboard
+from src.utils.scoreboard import Step7Scoreboard, RegressionGate
 
 
 def parse_args() -> argparse.Namespace:
@@ -215,6 +215,84 @@ def generate_scoreboard(baseline_path: str, checkpoint_path: str, output_dir: Pa
     return scoreboard_path
 
 
+def compute_embedding_drift(
+    step6_catalog_dir: Path,
+    step7_catalog_dir: Path,
+    baseline_metrics_path: str,
+    output_dir: Path,
+    n_samples: int = 1000
+) -> Path:
+    """
+    Compute embedding drift between Step 6 and Step 7.
+
+    Measures how much embeddings have changed for the same items.
+    Large drift indicates the model has moved away from original geometry.
+    """
+    print("\nComputing embedding drift...")
+
+    # Load catalogs
+    step6_manifest = json.load(open(step6_catalog_dir / "manifest.json"))
+    step7_manifest = json.load(open(step7_catalog_dir / "manifest.json"))
+
+    # Load embeddings
+    step6_embeddings = np.load(step6_catalog_dir / "catalog_img.npy")
+    step7_embeddings = np.load(step7_catalog_dir / "catalog_img.npy")
+
+    # Normalize
+    step6_embeddings = step6_embeddings / np.linalg.norm(step6_embeddings, axis=1, keepdims=True)
+    step7_embeddings = step7_embeddings / np.linalg.norm(step7_embeddings, axis=1, keepdims=True)
+
+    # Sample items to compare (use same indices)
+    n_items = min(len(step6_embeddings), len(step7_embeddings), n_samples)
+    indices = np.random.RandomState(42).choice(len(step6_embeddings), n_items, replace=False)
+
+    step6_sample = step6_embeddings[indices]
+    step7_sample = step7_embeddings[indices]
+
+    # Compute cosine similarities for each item
+    similarities = np.sum(step6_sample * step7_sample, axis=1)
+
+    # Statistics
+    drift_stats = {
+        'n_samples': n_items,
+        'mean_similarity': float(np.mean(similarities)),
+        'median_similarity': float(np.median(similarities)),
+        'p5_similarity': float(np.percentile(similarities, 5)),
+        'p95_similarity': float(np.percentile(similarities, 95)),
+        'min_similarity': float(np.min(similarities)),
+        'max_similarity': float(np.max(similarities))
+    }
+
+    # Create histogram data
+    hist_bins = np.linspace(0, 1, 21)
+    hist_counts, _ = np.histogram(similarities, bins=hist_bins)
+    drift_stats['similarity_histogram'] = {
+        'bins': hist_bins.tolist(),
+        'counts': hist_counts.tolist()
+    }
+
+    # Save results
+    drift_path = output_dir / "embedding_drift.json"
+    with open(drift_path, 'w') as f:
+        json.dump(drift_stats, f, indent=2)
+
+    # Print summary
+    print(".4f")
+    print(".4f")
+    print(".4f")
+    print(".4f")
+
+    if drift_stats['mean_similarity'] < 0.8:
+        print("⚠️  HIGH DRIFT: Embeddings have significantly changed from Step 6!")
+        print("   This may indicate loss of retrieval geometry.")
+    elif drift_stats['mean_similarity'] < 0.9:
+        print("⚠️  MODERATE DRIFT: Some embedding changes detected.")
+    else:
+        print("✓ LOW DRIFT: Embeddings remain close to Step 6.")
+
+    return drift_path
+
+
 def generate_weakness_gallery(catalog_dir: Path, dataset_path: str, output_dir: Path):
     """Generate weakness-focused gallery."""
     print("\nGenerating weakness-focused gallery...")
@@ -334,15 +412,45 @@ def main():
         str(metrics_path),
         output_dir
     )
-    
-    # 4. Generate weakness gallery
+
+    # 4. Check regression gate
+    print("\nRunning regression gate...")
+    gate = RegressionGate(args.baseline_metrics)
+    gate_pass, gate_results = gate.check_regression(str(metrics_path), top_k=10)
+    gate_path = gate.save_gate_results(gate_results, output_dir)
+
+    if not gate_pass:
+        print("\n" + "!" * 60)
+        print("REGRESSION GATE FAILED")
+        print("!" * 60)
+        print("This Step 7 run regressed too much vs Step 6 baseline.")
+        print("Check the gate.txt file for details.")
+        print(f"Gate results: {gate_path}")
+        sys.exit(1)  # Fail the run
+
+    print("Regression gate passed ✓")
+
+    # 6. Compute embedding drift
+    step6_catalog_dir = Path(args.baseline_metrics).parent / "catalog"
+    if step6_catalog_dir.exists():
+        drift_path = compute_embedding_drift(
+            step6_catalog_dir=step6_catalog_dir,
+            step7_catalog_dir=catalog_dir,
+            baseline_metrics_path=args.baseline_metrics,
+            output_dir=output_dir
+        )
+    else:
+        print("Warning: Step 6 catalog not found, skipping drift analysis")
+        drift_path = None
+
+    # 8. Generate weakness gallery
     gallery_path = generate_weakness_gallery(
         catalog_dir,
         args.dataset,
         output_dir
     )
-    
-    # 5. Generate final report
+
+    # 9. Generate final report
     report_path = generate_final_report(
         output_dir,
         scoreboard_path,
@@ -357,6 +465,9 @@ def main():
     print(f"  - Report: {report_path}")
     print(f"  - Scoreboard: {scoreboard_path}")
     print(f"  - Metrics: {metrics_path}")
+    print(f"  - Gate Results: {gate_path}")
+    if drift_path:
+        print(f"  - Embedding Drift: {drift_path}")
     if gallery_path:
         print(f"  - Gallery: {gallery_path}")
 

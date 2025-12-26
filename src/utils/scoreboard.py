@@ -65,8 +65,8 @@ class Step7Scoreboard:
         """
         checkpoint_metrics = self._load_metrics(checkpoint_metrics_path)
         
-        baseline = self.baseline_metrics['overall']
-        checkpoint = checkpoint_metrics['overall']
+        baseline = self.baseline_metrics  # Direct access to flat metrics structure
+        checkpoint = checkpoint_metrics   # Direct access to flat metrics structure
         
         # Overall metrics
         neckline_key = f'neckline_match@{top_k}'
@@ -288,15 +288,153 @@ class Step7Scoreboard:
         return str(text_path)
 
 
+class RegressionGate:
+    """
+    Regression gate to prevent Step 7 from silently regressing vs Step 6.
+
+    Fails the run if core metrics drop too much below baseline.
+    """
+
+    # Thresholds (percentage points below baseline)
+    CATEGORY_THRESHOLD = 3.0  # Category@10 can drop by max 3 pts
+    MATERIAL_THRESHOLD = 4.0   # Material@10 can drop by max 4 pts
+
+    def __init__(self, baseline_metrics_path: str):
+        """
+        Initialize gate with baseline metrics.
+
+        Args:
+            baseline_metrics_path: Path to Step 6 baseline metrics JSON
+        """
+        self.baseline_metrics_path = Path(baseline_metrics_path)
+        self.baseline_metrics = self._load_metrics(baseline_metrics_path)
+
+    def _load_metrics(self, metrics_path: str) -> Dict[str, Any]:
+        """Load metrics JSON from eval_retrieval.py output."""
+        with open(metrics_path, 'r') as f:
+            data = json.load(f)
+        return data.get('metrics', data)  # Handle both wrapped and direct format
+
+    def check_regression(self, checkpoint_metrics_path: str, top_k: int = 10) -> Tuple[bool, Dict[str, Any]]:
+        """
+        Check if checkpoint metrics pass regression gate.
+
+        Args:
+            checkpoint_metrics_path: Path to Step 7 checkpoint metrics JSON
+            top_k: Top-k value for metrics (default 10)
+
+        Returns:
+            Tuple of (pass/fail, gate_results_dict)
+        """
+        checkpoint_metrics = self._load_metrics(checkpoint_metrics_path)
+
+        # Extract key metrics
+        baseline_category = self.baseline_metrics.get(f'category_match@{top_k}', 0.0)
+        baseline_material = self.baseline_metrics.get(f'material_match@{top_k}_known_only', 0.0)
+
+        checkpoint_category = checkpoint_metrics.get(f'category_match@{top_k}', 0.0)
+        checkpoint_material = checkpoint_metrics.get(f'material_match@{top_k}_known_only', 0.0)
+
+        # Calculate deltas (positive = improvement, negative = regression)
+        category_delta = checkpoint_category - baseline_category
+        material_delta = checkpoint_material - baseline_material
+
+        # Check thresholds
+        category_pass = category_delta >= -self.CATEGORY_THRESHOLD
+        material_pass = material_delta >= -self.MATERIAL_THRESHOLD
+        overall_pass = category_pass and material_pass
+
+        results = {
+            'overall_pass': overall_pass,
+            'category_pass': category_pass,
+            'material_pass': material_pass,
+            'baseline_category': baseline_category,
+            'baseline_material': baseline_material,
+            'checkpoint_category': checkpoint_category,
+            'checkpoint_material': checkpoint_material,
+            'category_delta': category_delta,
+            'material_delta': material_delta,
+            'category_threshold': -self.CATEGORY_THRESHOLD,
+            'material_threshold': -self.MATERIAL_THRESHOLD
+        }
+
+        return overall_pass, results
+
+    def save_gate_results(self, results: Dict[str, Any], output_dir: Path) -> Path:
+        """
+        Save gate results to JSON and human-readable text files.
+
+        Args:
+            results: Gate results from check_regression
+            output_dir: Directory to save results
+
+        Returns:
+            Path to the gate results JSON file
+        """
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save JSON
+        json_path = output_dir / "gate.json"
+        with open(json_path, 'w') as f:
+            json.dump(results, f, indent=2)
+
+        # Save human-readable text
+        txt_path = output_dir / "gate.txt"
+        with open(txt_path, 'w') as f:
+            f.write("STEP 7 REGRESSION GATE RESULTS\n")
+            f.write("=" * 40 + "\n\n")
+
+            status = "[PASS] PASS" if results['overall_pass'] else "[FAIL] FAIL"
+            f.write(f"Overall Result: {status}\n\n")
+
+            f.write("Core Metrics Check:\n")
+            f.write("-" * 20 + "\n")
+
+            cat_status = "[OK]" if results['category_pass'] else "[FAIL]"
+            f.write(".1f"
+                   f"Threshold: ≥ {results['category_threshold']:+.1f} pts\n\n")
+
+            mat_status = "[OK]" if results['material_pass'] else "[FAIL]"
+            f.write(".1f"
+                   f"Threshold: ≥ {results['material_threshold']:+.1f} pts\n\n")
+
+            if not results['overall_pass']:
+                f.write("FAILURE REASON:\n")
+                f.write("-" * 15 + "\n")
+                if not results['category_pass']:
+                    f.write("• Category@10 regressed too much below Step 6 baseline\n")
+                if not results['material_pass']:
+                    f.write("• Material@10 regressed too much below Step 6 baseline\n")
+                f.write("\nThis run does not meet Step 7 quality standards.\n")
+                f.write("Check training setup: LR too high, attribute losses disabled,\n")
+                f.write("or hard negatives causing generalization collapse.\n")
+
+        return json_path
+
+
 def create_scoreboard(baseline_metrics_path: str) -> Step7Scoreboard:
     """
     Factory function to create a Step7Scoreboard.
-    
+
     Args:
         baseline_metrics_path: Path to baseline metrics JSON
-        
+
     Returns:
         Configured Step7Scoreboard instance
     """
     return Step7Scoreboard(baseline_metrics_path)
+
+
+def create_regression_gate(baseline_metrics_path: str) -> RegressionGate:
+    """
+    Factory function to create a RegressionGate.
+
+    Args:
+        baseline_metrics_path: Path to baseline metrics JSON
+
+    Returns:
+        Configured RegressionGate instance
+    """
+    return RegressionGate(baseline_metrics_path)
 

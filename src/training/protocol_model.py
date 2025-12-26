@@ -187,6 +187,7 @@ class ProtocolModel(nn.Module):
         
         if use_attribute_heads:
             default_dims = {
+                'category': 25,  # Adjust based on your schema
                 'material': 20,  # Adjust based on your schema
                 'pattern': 15,
                 'neckline': 12,
