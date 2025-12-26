@@ -1,6 +1,6 @@
 {
   "config": {
-    "catalog_dir": "artifacts\\step7\\runs\\run_006_corrected\\eval_full\\catalog",
+    "catalog_dir": "artifacts\\step7\\runs\\run_006_corrected\\eval_full_fixed\\catalog",
     "query_dataset": "data/processed_v2/hf",
     "query_split": "validation",
     "n_queries": 4254,
@@ -193,10 +193,10 @@
     }
   },
   "query_times": {
-    "mean_ms": 5.971618700767269,
-    "std_ms": 3.355946323423445,
-    "p50_ms": 5.005598068237305,
-    "p95_ms": 9.97657775878906,
-    "p99_ms": 15.406513214111413
+    "mean_ms": 7.868514690928242,
+    "std_ms": 2.7882784357584316,
+    "p50_ms": 7.537364959716797,
+    "p95_ms": 13.058483600616453,
+    "p99_ms": 17.040035724639896
   }
 }

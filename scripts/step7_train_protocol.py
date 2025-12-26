@@ -332,32 +332,34 @@ def train_epoch(
         other_images = []
         anchor_texts = []
         other_texts = []
-        
+        anchor_batch = []  # Metadata for attribute labels
+
         for _, row in batch_df.iterrows():
             anchor_idx = int(row['anchor_idx'])
             other_idx = int(row['other_idx'])
-            
+
             anchor_item = dataset[anchor_idx]
             other_item = dataset[other_idx]
-            
+
             anchor_images.append(anchor_item['image'])
             other_images.append(other_item['image'])
             anchor_texts.append(anchor_item.get('text', ''))
             other_texts.append(other_item.get('text', ''))
-        
+            anchor_batch.append(anchor_item)  # Store metadata for attribute labels
+
         # Preprocess images
         anchor_imgs_tensor = torch.stack([
             model.preprocess(img) for img in anchor_images
         ]).to(model.device)
-        
+
         other_imgs_tensor = torch.stack([
             model.preprocess(img) for img in other_images
         ]).to(model.device)
-        
+
         # Forward pass
         anchor_output = model.forward_image(anchor_imgs_tensor, return_attributes=True)
         other_output = model.forward_image(other_imgs_tensor, return_attributes=False)
-        
+
         # Prepare attribute labels (from anchor metadata)
         attribute_labels = prepare_attribute_labels_batch(anchor_batch, label_mappings, model.device)
         
@@ -711,21 +713,6 @@ def main():
         weight_decay=0.01
     )
 
-    # Learning rate scheduler (warmup + cosine decay)
-    total_steps = args.epochs * n_batches_per_epoch
-    warmup_steps = int(args.warmup_ratio * total_steps)
-
-    def lr_lambda(step):
-        if step < warmup_steps:
-            # Linear warmup
-            return step / max(1, warmup_steps)
-        else:
-            # Cosine decay
-            progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
-            return 0.5 * (1 + torch.cos(torch.pi * progress))
-
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
-
     # Training log
     log_file = output_dir / "train_log.jsonl"
     
@@ -751,6 +738,21 @@ def main():
         return
 
     n_batches_per_epoch = len(pair_df) // args.batch_size
+
+    # Learning rate scheduler (warmup + cosine decay)
+    total_steps = args.epochs * n_batches_per_epoch
+    warmup_steps = int(args.warmup_ratio * total_steps)
+
+    def lr_lambda(step):
+        if step < warmup_steps:
+            # Linear warmup
+            return step / max(1, warmup_steps)
+        else:
+            # Cosine decay
+            progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
+            return 0.5 * (1 + torch.cos(torch.pi * progress))
+
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
     for epoch in range(1, args.epochs + 1):
         avg_loss, stats = train_epoch(
