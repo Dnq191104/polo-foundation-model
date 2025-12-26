@@ -29,7 +29,7 @@ import torch.optim as optim
 from datasets import load_from_disk
 from tqdm import tqdm
 
-from typing import Dict
+from typing import Dict, List, Optional
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
