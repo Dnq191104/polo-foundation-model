@@ -68,6 +68,15 @@ def create_ablation_config(
             'w_sleeve': 0.1,
             'description': 'Contrastive + all attributes'
         })
+    elif ablation_name == "contrastive_optimized":
+        config.update({
+            'w_category': 0.5,    # Increased from 0.2
+            'w_material': 0.1,    # Decreased from 0.2
+            'w_neckline': 0.2,    # Increased from 0.1
+            'w_pattern': 0.1,     # Keep same
+            'w_sleeve': 0.1,      # Keep same
+            'description': 'Optimized weights: more category, less material'
+        })
     else:
         raise ValueError(f"Unknown ablation: {ablation_name}")
 
@@ -356,7 +365,8 @@ def main():
     ablations = [
         "contrastive_only",
         "contrastive_plus_category",
-        "contrastive_plus_all"
+        "contrastive_plus_all",
+        "contrastive_optimized"
     ]
 
     # Run all ablations
