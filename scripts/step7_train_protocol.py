@@ -474,13 +474,23 @@ def run_overfit_test(
     print("Setting up overfit test...")
 
     # Get one batch and freeze it
-    sampler_iter = iter(sampler)
-    anchor_batch, other_batch, _ = next(sampler_iter)
+    batch_df = sampler.sample_batch()
 
     # Extract data for this fixed batch
-    anchor_images = [dataset[idx]['image'] for idx in anchor_batch]
-    anchor_batch_data = [dataset[idx] for idx in anchor_batch]
-    other_images = [dataset[idx]['image'] for idx in other_batch]
+    anchor_images = []
+    other_images = []
+    anchor_batch_data = []
+
+    for _, row in batch_df.iterrows():
+        anchor_idx = int(row['anchor_idx'])
+        other_idx = int(row['other_idx'])
+
+        anchor_item = dataset[anchor_idx]
+        other_item = dataset[other_idx]
+
+        anchor_images.append(anchor_item['image'])
+        other_images.append(other_item['image'])
+        anchor_batch_data.append(anchor_item)
 
     # Preprocess once (fixed for all steps)
     anchor_imgs_tensor = torch.stack([
