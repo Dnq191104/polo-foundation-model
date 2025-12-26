@@ -217,7 +217,7 @@ def run_ablation(
 
             # Simplified training (just one batch type for speed)
             anchor_indices = batch_df['anchor_idx'].tolist()[:8]  # Small batch
-            positive_indices = batch_df['positive_indices'].tolist()[:8]
+            positive_indices = batch_df['other_idx'].tolist()[:8]
 
             # Get images
             anchor_images = [dataset[idx]['image'] for idx in anchor_indices]
