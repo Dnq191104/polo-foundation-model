@@ -109,10 +109,8 @@ def run_mini_eval(
     category_correct = 0
     material_correct = 0
 
-    for query_item in queries:
-        query_idx = query_item['idx']
+    for query_idx, query_item in zip(indices, queries):
         query_category = query_item.get('category2', '')
-        query_material = query_item.get('attr_material_primary', '')
 
         # Get query embedding
         query_img = query_item['image']
@@ -130,26 +128,18 @@ def run_mini_eval(
         similarities[query_idx] = -float('inf')  # Exclude self
         top10_indices = torch.topk(similarities, 10).indices.tolist()
 
-        # Check if correct category/material in top-10
+        # Check if correct category in top-10
         top10_items = [dataset[idx] for idx in top10_indices]
 
-        # Category match
+        # Category match (only evaluation metric for mini-eval)
         if any(item.get('category2') == query_category for item in top10_items):
             category_correct += 1
-
-        # Material match
-        if any(item.get('attr_material_primary') == query_material for item in top10_items):
-            material_correct += 1
-
-        # Any correct match
-        if any(item.get('category2') == query_category or
-               item.get('attr_material_primary') == query_material for item in top10_items):
             total_correct += 1
 
     return {
         'total_acc': total_correct / n_queries,
         'category_acc': category_correct / n_queries,
-        'material_acc': material_correct / n_queries
+        'material_acc': 0.0  # Not evaluated in mini-eval
     }
 
 
@@ -215,9 +205,22 @@ def run_ablation(
         for batch_idx in range(n_batches_per_epoch):
             batch_df = sampler.sample_batch()
 
-            # Simplified training (just one batch type for speed)
-            anchor_indices = batch_df['anchor_idx'].tolist()[:8]  # Small batch
-            positive_indices = batch_df['other_idx'].tolist()[:8]
+            # Simplified training (just positive pairs for contrastive learning)
+            # Filter for positive pairs only (label=1)
+            positive_pairs = batch_df[batch_df['label'] == 1].head(8)
+
+            if len(positive_pairs) == 0:
+                continue  # Skip if no positive pairs in this batch
+
+            anchor_indices = []
+            positive_indices = []
+
+            for _, row in positive_pairs.iterrows():
+                anchor_idx = int(row['anchor_idx'])
+                other_idx = int(row['other_idx'])
+
+                anchor_indices.append(anchor_idx)
+                positive_indices.append(other_idx)
 
             # Get images
             anchor_images = [dataset[idx]['image'] for idx in anchor_indices]
