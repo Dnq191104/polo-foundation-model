@@ -181,7 +181,16 @@ def run_quick_ablation(ablation_name: str, config: Dict[str, Any], dataset, outp
 
     # Quick training: partial epochs
     results = []
-    batches_per_epoch = min(50, len(dataset) // config['batch_size'])
+
+    # CPU optimization: smaller batches and fewer evaluations
+    if torch.cuda.is_available():
+        batches_per_epoch = min(50, len(dataset) // config['batch_size'])
+        eval_frequency = 25
+    else:
+        # CPU: smaller effective batch size and less frequent eval
+        batches_per_epoch = min(20, len(dataset) // config['batch_size'])
+        eval_frequency = 50  # Less frequent on CPU
+
     total_batches = int(config['epochs'] * batches_per_epoch)
 
     print(f"Training for {total_batches} batches ({config['epochs']} epochs × {batches_per_epoch} batches)")
@@ -228,13 +237,26 @@ def run_quick_ablation(ablation_name: str, config: Dict[str, Any], dataset, outp
 
         global_step += 1
 
-        # Quick eval every 25 batches
-        if batch_idx % 25 == 0:
+        # Quick eval (frequency based on hardware)
+        if batch_idx % eval_frequency == 0:
             print(f"Batch {batch_idx}/{total_batches}: loss={loss.item():.4f}")
 
-            # Dev eval
-            eval_acc = quick_dev_eval(model, dataset, n_queries=50)
-            print(".3f")
+            # Skip dev eval on CPU (too slow), just track loss
+            if torch.cuda.is_available():
+                eval_acc = quick_dev_eval(model, dataset, n_queries=50)
+                print(".3f")
+            else:
+                eval_acc = 0.0  # Placeholder for CPU runs
+                print("  (CPU mode - skipping dev eval for speed)")
+
+            results.append({
+                'batch': batch_idx,
+                'global_step': global_step,
+                'loss': loss.item(),
+                'contrastive_loss': losses['contrastive'].item(),
+                'attribute_loss': losses.get('attribute_total', torch.tensor(0.0)).item(),
+                'dev_acc': eval_acc
+            })
 
             results.append({
                 'batch': batch_idx,
@@ -258,8 +280,9 @@ def run_quick_ablation(ablation_name: str, config: Dict[str, Any], dataset, outp
         'ablation': ablation_name,
         'description': config['description'],
         'final_dev_acc': results[-1]['dev_acc'] if results else 0.0,
-        'best_dev_acc': max(r['dev_acc'] for r in results) if results else 0.0,
-        'final_loss': results[-1]['loss'] if results else float('inf')
+        'best_dev_acc': max((r['dev_acc'] for r in results if r['dev_acc'] > 0), default=0.0),
+        'final_loss': results[-1]['loss'] if results else float('inf'),
+        'cpu_mode': not torch.cuda.is_available()
     }
 
 
@@ -323,16 +346,28 @@ def main():
     print("QUICK ABLATION COMPARISON")
     print(f"{'='*60}")
 
+    # Check if CPU mode
+    cpu_mode = any(r.get('cpu_mode', False) for r in all_results)
+
     print("Ablation".ljust(25), "Description".ljust(30), "Dev@10".ljust(10), "Best@10".ljust(10))
     print("-" * 80)
 
     for result in all_results:
         name = result['ablation'][:24]
         desc = result['description'][:29]
-        final_acc = ".3f"
-        best_acc = ".3f"
+
+        if cpu_mode and result['final_dev_acc'] == 0.0:
+            final_acc = "N/A (CPU)"
+            best_acc = "N/A (CPU)"
+        else:
+            final_acc = ".3f"
+            best_acc = ".3f"
 
         print(f"{name:<25}{desc:<30}{final_acc:<10}{best_acc:<10}")
+
+    if cpu_mode:
+        print("\n📝 Note: CPU mode detected - dev evaluation was skipped for speed")
+        print("   Loss curves are still valid for comparing configurations")
 
     # Save summary
     with open(output_dir / "quick_ablation_comparison.json", 'w') as f:
