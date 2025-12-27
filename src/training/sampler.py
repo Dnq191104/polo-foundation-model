@@ -9,8 +9,173 @@ import random
 import numpy as np
 from collections import Counter, defaultdict
 from typing import List, Dict, Any, Optional
+import functools
+import hashlib
+import pickle
+import os
 
 import pandas as pd
+import numpy as np
+from datasets import Dataset
+
+
+def cache_result(cache_dir='artifacts/cache'):
+    """Cache expensive deterministic functions"""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            # Create cache key from function name + args
+            key_data = f"{func.__name__}_{str(args)}_{str(kwargs)}"
+            key = hashlib.md5(key_data.encode()).hexdigest()
+            cache_path = f"{cache_dir}/{key}.pkl"
+
+            if os.path.exists(cache_path):
+                with open(cache_path, 'rb') as f:
+                    return pickle.load(f)
+
+            result = func(*args, **kwargs)
+
+            os.makedirs(cache_dir, exist_ok=True)
+            with open(cache_path, 'wb') as f:
+                pickle.dump(result, f)
+
+            return result
+        return wrapper
+    return decorator
+
+
+class OptimizedItemSampler:
+    """
+    On-the-fly balanced sampling without pre-generated pairs.
+
+    Benefits:
+    - No expensive pair generation
+    - Dynamic balancing weights
+    - Minimal memory usage
+    - Fast iteration
+    """
+
+    def __init__(self, dataset, batch_size=64, seed=42):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.seed = seed
+        self.rng = np.random.RandomState(seed)
+
+        # Build cached indices
+        self.category_to_ids = self._build_category_index()
+        self.material_to_ids = self._build_material_index()
+
+        # Default balanced weights
+        self.category_weights = self._compute_balanced_weights()
+        self.material_weights = None  # Can be set dynamically
+
+    @cache_result()
+    def _build_category_index(self):
+        """Build category → [item_ids] mapping"""
+        index = {}
+        for i, item in enumerate(self.dataset):
+            category = item.get('category2', 'unknown')
+            if category not in index:
+                index[category] = []
+            index[category].append(i)
+        return index
+
+    @cache_result()
+    def _build_material_index(self):
+        """Build material → [item_ids] mapping"""
+        index = {}
+        for i, item in enumerate(self.dataset):
+            material = item.get('attr_material_primary', 'unknown')
+            if material not in index:
+                index[material] = []
+            index[material].append(i)
+        return index
+
+    def _compute_balanced_weights(self):
+        """Compute balanced weights for categories"""
+        categories = list(self.category_to_ids.keys())
+        n_categories = len(categories)
+
+        # Start with uniform weights
+        weights = {cat: 1.0 / n_categories for cat in categories}
+
+        # Boost weak categories
+        weak_categories = ['shorts', 'rompers', 'cardigans', 'graphic']
+        for cat in weak_categories:
+            if cat in weights:
+                weights[cat] *= 3.0  # 3x boost
+
+        # Cap dominant categories
+        dominant_categories = ['tees', 't-shirts']
+        for cat in dominant_categories:
+            if cat in weights:
+                weights[cat] *= 0.3  # Reduce by 70%
+
+        # Renormalize
+        total = sum(weights.values())
+        weights = {k: v/total for k, v in weights.items()}
+
+        return weights
+
+    def update_curriculum_weights(self, epoch, max_epochs=10):
+        """Update weights based on curriculum schedule"""
+        progress = epoch / max_epochs
+
+        if progress < 0.2:  # Epochs 1-2: Easy categories only
+            easy_cats = ['tees', 'sweaters', 'jackets']
+            weights = {cat: (1.0 if cat in easy_cats else 0.0)
+                      for cat in self.category_weights.keys()}
+        elif progress < 0.4:  # Epochs 3-4: Add medium
+            medium_cats = ['tees', 'sweaters', 'jackets', 'dresses', 'blouses']
+            weights = {cat: (0.6 if cat in ['tees', 'sweaters', 'jackets'] else
+                           0.3 if cat in ['dresses', 'blouses'] else 0.05)
+                      for cat in self.category_weights.keys()}
+        else:  # Epochs 5+: All balanced
+            weights = self._compute_balanced_weights()
+
+        # Renormalize
+        total = sum(weights.values())
+        if total > 0:
+            weights = {k: v/total for k, v in weights.items()}
+
+        self.category_weights = weights
+
+    def sample_batch(self):
+        """Sample a balanced batch on-the-fly"""
+        batch_pairs = []
+
+        # Sample categories according to current weights
+        categories = list(self.category_weights.keys())
+        weights = list(self.category_weights.values())
+
+        sampled_categories = self.rng.choice(
+            categories,
+            size=self.batch_size // 2,  # Half batch for positive pairs
+            p=weights
+        )
+
+        for category in sampled_categories:
+            cat_ids = self.category_to_ids.get(category, [])
+            if len(cat_ids) >= 2:
+                # Sample positive pair within category
+                anchor_id, pos_id = self.rng.choice(cat_ids, 2, replace=False)
+                batch_pairs.append((anchor_id, pos_id, 1))  # 1 = positive label
+
+        # Sample negative pairs from different categories
+        all_categories = list(self.category_to_ids.keys())
+        for _ in range(self.batch_size // 2):
+            # Pick two different categories
+            cat1, cat2 = self.rng.choice(all_categories, 2, replace=False)
+
+            cat1_ids = self.category_to_ids.get(cat1, [])
+            cat2_ids = self.category_to_ids.get(cat2, [])
+
+            if cat1_ids and cat2_ids:
+                anchor_id = self.rng.choice(cat1_ids)
+                neg_id = self.rng.choice(cat2_ids)
+                batch_pairs.append((anchor_id, neg_id, 0))  # 0 = negative label
+
+        return batch_pairs
 
 
 class BalancedPairSampler:
