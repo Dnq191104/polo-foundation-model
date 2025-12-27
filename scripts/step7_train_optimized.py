@@ -263,8 +263,8 @@ def train_optimized(args):
                 continue
 
             # Prepare batch data
-            anchor_indices = [p[0] for p in batch_pairs]
-            positive_indices = [p[1] for p in batch_pairs]
+            anchor_indices = [int(p[0]) for p in batch_pairs]
+            positive_indices = [int(p[1]) for p in batch_pairs]
             labels = [p[2] for p in batch_pairs]
 
             # Get items

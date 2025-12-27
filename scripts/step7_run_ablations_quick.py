@@ -197,8 +197,8 @@ def run_quick_ablation(ablation_name: str, config: Dict[str, Any], dataset, outp
             continue
 
         # Prepare batch
-        anchor_indices = [p[0] for p in batch_pairs]
-        positive_indices = [p[1] for p in batch_pairs]
+        anchor_indices = [int(p[0]) for p in batch_pairs]
+        positive_indices = [int(p[1]) for p in batch_pairs]
 
         anchor_items = [dataset[idx] for idx in anchor_indices]
         positive_items = [dataset[idx] for idx in positive_indices]
