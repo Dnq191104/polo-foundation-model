@@ -22,9 +22,23 @@ from src.training.protocol_model import ProtocolModel
 
 
 def load_dev_ids(dev_ids_path):
-    """Load dev evaluation IDs"""
+    """Load dev evaluation IDs (supports both regular and gold eval formats)"""
     with open(dev_ids_path, 'r') as f:
-        return json.load(f)
+        data = json.load(f)
+
+    # Handle gold eval format (dict with eval_ids key)
+    if isinstance(data, dict) and 'eval_ids' in data:
+        print(f"Loaded gold eval set with {len(data['eval_ids'])} queries")
+        if 'metadata' in data:
+            meta = data['metadata']
+            if 'verified_at' in meta:
+                print(f"  Verified: {meta.get('verified_at', 'N/A')}")
+            if 'n_corrections' in meta and meta['n_corrections'] > 0:
+                print(f"  Corrections applied: {meta['n_corrections']}")
+        return data['eval_ids']
+    else:
+        # Handle regular format (list of IDs)
+        return data
 
 
 def dev_evaluate(model, dataset, dev_ids, device='cuda', n_queries=100):
@@ -92,12 +106,12 @@ def dev_evaluate(model, dataset, dev_ids, device='cuda', n_queries=100):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Fast dev evaluation")
+    parser = argparse.ArgumentParser(description="Fast dev evaluation (supports regular dev eval and gold eval sets)")
     parser.add_argument("--checkpoint", type=str, required=True, help="Model checkpoint")
     parser.add_argument("--dataset", type=str, required=True, help="Dataset path")
-    parser.add_argument("--dev_ids", type=str, required=True, help="Dev eval IDs JSON")
+    parser.add_argument("--dev_ids", type=str, required=True, help="Dev eval IDs JSON (regular or gold eval format)")
     parser.add_argument("--output", type=str, help="Output JSON file")
-    parser.add_argument("--n_queries", type=int, default=100, help="Number of queries")
+    parser.add_argument("--n_queries", type=int, default=100, help="Number of queries to evaluate (for limiting)")
     parser.add_argument("--device", type=str, default=None, help="Device")
 
     args = parser.parse_args()
