@@ -31,7 +31,7 @@ pip install -r requirements.txt
 
 ```bash
 # Process the raw fashion dataset
-python data/process_data.py
+python scripts/process_data.py
 
 # This creates:
 # - data/processed_v2/hf/ (HuggingFace dataset)
